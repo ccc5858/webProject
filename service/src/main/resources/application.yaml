@@ -1,0 +1,21 @@
+server:
+  port: 8089
+
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/webproject
+    username: root
+    password: chenzhiqi585812
+    driver-class-name: com.mysql.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: chenzhiqi585812
+  rabbitmq:
+    host: 192.168.6.102 # ?????IP
+    port: 5672 # ??
+    virtual-host: / # ????
+    username: ccc # ???
+    password: 123 # ??
+
