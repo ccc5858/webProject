@@ -1,10 +1,15 @@
 package com.ccc.service.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.UUID;
 import com.alibaba.fastjson.JSON;
+import com.ccc.common.constant.LockConstant;
 import com.ccc.common.constant.RedisConstant;
 import com.ccc.common.properties.JwtProperties;
+import com.ccc.common.threadLocal.BaseConstant;
+import com.ccc.common.utils.AliOssUtils;
 import com.ccc.common.utils.JwtUtils;
+import com.ccc.service.annotation.logger;
 import com.ccc.service.mapper.UserMapper;
 import com.ccc.service.service.UserService;
 import com.example.pojo.dto.UserLoginDTO;
@@ -24,7 +29,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +72,7 @@ public class UserServiceImpl implements UserService {
         }
 
         log.info("用户登录：{}", userLoginDTO);
-        String key = RedisConstant.USER_LOCK + userLoginDTO.getUsername();
+        String key = LockConstant.USER_LOCK_LOGIN + userLoginDTO.getUsername();
         RLock lock = redisson.getLock(key);
         boolean b = false;
         String token;
@@ -89,7 +96,7 @@ public class UserServiceImpl implements UserService {
 
             Map<String, Object> claims = new HashMap<>();
             claims.put("id", user.getId());
-            token = JwtUtils.createToken(claims, jwtProperties.getTtl(), jwtProperties.getSecretKey());
+            token = JwtUtils.createToken(jwtProperties.getSecretKey(), jwtProperties.getTtl(), claims);
             String msg = user.getId() + ":" + token;
             rabbitTemplate.convertAndSend("redis", "jwt", msg);
         } catch (Exception e) {
@@ -110,7 +117,7 @@ public class UserServiceImpl implements UserService {
         }
 
         log.info("查询用户：{}", id);
-        String keyLock = RedisConstant.USER_LOCK + id;
+        String keyLock = LockConstant.USER_LOCK_GETID + id;
         String key = RedisConstant.USER_INFO + id;
         User user = null;
         UserVO userVO = new UserVO();
@@ -199,7 +206,7 @@ public class UserServiceImpl implements UserService {
 
         log.info("用户注册：{}", userRegisterDTO);
         String username = userRegisterDTO.getUsername();
-        String key = RedisConstant.USER_LOCK + username;
+        String key = LockConstant.USER_LOCK_REGISTER + username;
 
         RLock lock = redisson.getLock(key);
         boolean b = false;
@@ -229,6 +236,7 @@ public class UserServiceImpl implements UserService {
 
         User newUser = new User();
         BeanUtil.copyProperties(userRegisterDTO, newUser);
+        String msg = JSON.toJSONString(newUser);
         userMapper.insert(newUser);
 
         return Result.success();
@@ -241,7 +249,7 @@ public class UserServiceImpl implements UserService {
         }
 
         log.info("分页查询用户：{}", userSelectPage);
-        String key = RedisConstant.USER_LOCK + userSelectPage.getUsername();
+        String key = LockConstant.USER_LOCK_GETUSER + BaseConstant.getCurrentUser();
         List<User> result = new ArrayList<>();
 
         RLock lock = redisson.getLock(key);
@@ -312,8 +320,7 @@ public class UserServiceImpl implements UserService {
         BeanUtil.copyProperties(userDto, user);
 
         log.info("更新用户：{}", user);
-        String key = RedisConstant.USER_LOCK + user.getId();
-        String keyUp = RedisConstant.USER_LOCK_UPDATE + user.getId();
+        String key = LockConstant.USER_LOCK_UPDATE + user.getId();
         RLock lock = redisson.getLock(key);
         boolean b = false;
 
@@ -361,7 +368,7 @@ public class UserServiceImpl implements UserService {
         if(json == null) {
             return Result.error("用户不存在");
         }
-        RLock lock = redisson.getLock(RedisConstant.USER_LOCK_DELETE + id);
+        RLock lock = redisson.getLock(LockConstant.USER_LOCK_DELETE + id);
         boolean b = false;
 
         try {
@@ -388,4 +395,11 @@ public class UserServiceImpl implements UserService {
 
         return Result.success();
     }
+
+    @logger
+    @Override
+    public String text() {
+        return "text";
+    }
+
 }

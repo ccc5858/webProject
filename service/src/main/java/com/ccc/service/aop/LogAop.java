@@ -1,19 +1,16 @@
 package com.ccc.service.aop;
 
-import com.ccc.common.annotation.logger;
+import com.ccc.service.annotation.logger;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.Pointcut;
 import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.time.LocalDateTime;
 
 @Component
@@ -21,11 +18,10 @@ import java.time.LocalDateTime;
 @Slf4j
 public class LogAop {
 
-    @Pointcut("execution(* com.ccc.service.controller.*(..)) || @annotation(com.ccc.common.annotation.logger)")
-    public void pointcut() {
-    }
+    @Pointcut("execution(* com.ccc.service.service.impl.*.*(..)) && @annotation(com.ccc.service.annotation.logger)")
+    public void point(){}
 
-    @Around("pointcut()")
+    @Around("point()")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signatureLog = (MethodSignature) joinPoint.getSignature();
         logger logger = signatureLog.getMethod().getAnnotation(logger.class);

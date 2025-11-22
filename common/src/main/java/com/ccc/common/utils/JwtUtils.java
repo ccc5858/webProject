@@ -13,18 +13,27 @@ import java.util.Map;
 
 public class JwtUtils {
 
-    public static String createToken(Map<String, Object> claims, long ttlMillis, String secretKey) {
+    public static String createToken(String secretKey, long ttlMillis, Map<String, Object> claims) {
         SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
-        long nowMillis = System.currentTimeMillis();
-        long expMillis = nowMillis + ttlMillis;
+
+        long expMillis = System.currentTimeMillis() + ttlMillis;
         Date exp = new Date(expMillis);
 
-        JwtBuilder jwtBuilder = Jwts.builder().setExpiration(exp).setClaims(claims).signWith(signatureAlgorithm, secretKey.getBytes(StandardCharsets.UTF_8));
-        return jwtBuilder.compact();
+        JwtBuilder builder = Jwts.builder()
+                .setClaims(claims)
+                .signWith(signatureAlgorithm, secretKey.getBytes(StandardCharsets.UTF_8))
+                .setExpiration(exp);
+
+        return builder.compact();
     }
 
-    public static Claims parseToken(String token, String secretKey) {
-        Claims body = Jwts.parser().setSigningKey(secretKey.getBytes(StandardCharsets.UTF_8)).parseClaimsJws(token).getBody();
-        return body;
+
+    public static Claims parseToken(String secretKey, String token) {
+        // 得到DefaultJwtParser
+        Claims claims = Jwts.parser()
+                .setSigningKey(secretKey.getBytes(StandardCharsets.UTF_8))
+                .parseClaimsJws(token).getBody();
+        return claims;
     }
+
 }

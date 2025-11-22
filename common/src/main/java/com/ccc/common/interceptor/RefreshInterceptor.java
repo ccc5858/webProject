@@ -13,6 +13,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -39,13 +40,16 @@ public class RefreshInterceptor implements HandlerInterceptor {
                 return true;
             }
 
-            String s = stringRedisTemplate.opsForValue().get(RedisConstant.USER_TOKEN + claims.getId());
+            Integer id = (Integer) claims.get("id");
+
+
+            String s = stringRedisTemplate.opsForValue().get(RedisConstant.USER_TOKEN + id);
             if (s == null) {
                 return true;
             }
 
-            BaseConstant.setCurrentUser((int) claims.get("id"));
-            stringRedisTemplate.expire(RedisConstant.USER_TOKEN + claims.getId(), jwtproperties.getTtl(), TimeUnit.MILLISECONDS);
+            BaseConstant.setCurrentUser(id);
+            stringRedisTemplate.expire(RedisConstant.USER_TOKEN + id, jwtproperties.getTtl(), TimeUnit.MILLISECONDS);
 
             return true;
         } catch (Exception e) {

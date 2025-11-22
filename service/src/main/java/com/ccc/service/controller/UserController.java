@@ -9,6 +9,7 @@ import com.example.pojo.entity.User;
 import com.example.pojo.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/user")
@@ -46,4 +47,5 @@ public class UserController {
     public Result delete(@PathVariable Integer id) {
         return userService.delete(id);
     }
+
 }

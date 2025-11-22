@@ -3,6 +3,11 @@ ccc:
     secret-key: nihaoccc
     ttl: 7200000
     token-name: token
+  alioss:
+    access-key-id: LTAI5t7kbAR5QX3toWwyHyYb
+    access-key-secret: qkFtKoghOStRbeNeYYXAl7G6yWeW3a
+    endpoint: oss-cn-beijing.aliyuncs.com
+    bucket-name: java-web-ccc-project
 
 spring:
   datasource:
@@ -12,9 +17,15 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
   data:
     redis:
-      host: localhost
-      port: 6379
       password: chenzhiqi585812
+      port: 6379
+      host: 192.168.6.102
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 1
+          time-between-eviction-runs: 10s
   rabbitmq:
     host: 192.168.6.102 # ?????IP
     port: 5672 # ??
