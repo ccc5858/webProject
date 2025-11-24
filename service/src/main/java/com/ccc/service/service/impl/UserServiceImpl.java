@@ -27,15 +27,13 @@ import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -52,7 +50,7 @@ public class UserServiceImpl implements UserService {
     private RabbitTemplate rabbitTemplate;
 
     @Autowired
-    private RedisTemplate redisTemplate;
+    private StringRedisTemplate redisTemplate;
 
     @Autowired
     private RedissonClient redisson;
@@ -177,6 +175,8 @@ public class UserServiceImpl implements UserService {
         }
 
         redisTemplate.opsForValue().set(key, JSON.toJSONString(user), 10, TimeUnit.MINUTES);
+        Set<String> members = redisTemplate.opsForSet().members(RedisConstant.USER_UPLOAD + user.getId());
+        userVO.setUrlList(members);
         BeanUtil.copyProperties(user, userVO);
         return Result.success(userVO);
     }
@@ -237,7 +237,7 @@ public class UserServiceImpl implements UserService {
         User newUser = new User();
         BeanUtil.copyProperties(userRegisterDTO, newUser);
         String msg = JSON.toJSONString(newUser);
-        userMapper.insert(newUser);
+        rabbitTemplate.convertAndSend("mysql", "user", msg);
 
         return Result.success();
     }
@@ -352,7 +352,7 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("数据已被其他用户修改，请刷新后重试（最新版本号：" + latestVersion + "）");
         }
 
-        redisTemplate.delete(RedisConstant.USER_INFO + user.getId());
+        rabbitTemplate.convertAndSend("mysql", "user", user);
         return Result.success();
     }
 
@@ -365,8 +365,8 @@ public class UserServiceImpl implements UserService {
         }
 
         String json = (String) redisTemplate.opsForValue().get(RedisConstant.USER_INFO + id);
-        if(json == null) {
-            return Result.error("用户不存在");
+        if(json != null) {
+            rabbitTemplate.convertAndSend("redis", "user", id);
         }
         RLock lock = redisson.getLock(LockConstant.USER_LOCK_DELETE + id);
         boolean b = false;
@@ -382,8 +382,7 @@ public class UserServiceImpl implements UserService {
                 return Result.error("用户不存在");
             }
 
-            redisTemplate.delete(RedisConstant.USER_INFO + id);
-            userMapper.delete(id);
+            rabbitTemplate.convertAndSend("mysql", "user", id);
 
         } catch (Exception e) {
             throw new RuntimeException("数据库删除用户失败，无对应记录");

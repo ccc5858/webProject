@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserWithUrl {
+public class Url {
 
     private Integer id;
 
@@ -17,4 +17,8 @@ public class UserWithUrl {
     private Integer userId;
 
     private DateTime uploadTime;
+
+    private String introduce;
+
+    private String name;
 }

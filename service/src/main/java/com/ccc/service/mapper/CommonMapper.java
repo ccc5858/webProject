@@ -1,6 +1,6 @@
 package com.ccc.service.mapper;
 
-import com.example.pojo.entity.UserWithUrl;
+import com.example.pojo.entity.Url;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
@@ -10,9 +10,11 @@ import java.time.LocalDateTime;
 @Mapper
 public interface CommonMapper {
 
-    @Insert("insert into upload(user_id, url, upload_time) values(#{userId}, #{url}, #{uploadTime})")
-    void insert(Integer userId, String url, LocalDateTime uploadTime);
+    void insert(Integer userId, String url, LocalDateTime uploadTime, String introduce, String name);
 
-    @Select("select * from upload where url = #{url}")
-    UserWithUrl getByUrl(String url);
+    @Select("select * from url where url = #{url}")
+    Url getByUrl(String url);
+
+    @Select("select * from url where id = #{id}")
+    Url getById(Integer id);
 }

@@ -1,13 +1,16 @@
 package com.ccc.service.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
+import com.alibaba.fastjson.JSON;
 import com.ccc.common.constant.LockConstant;
 import com.ccc.common.constant.RedisConstant;
 import com.ccc.common.threadLocal.BaseConstant;
 import com.ccc.common.utils.AliOssUtils;
 import com.ccc.service.mapper.CommonMapper;
 import com.ccc.service.service.CommonService;
-import com.example.pojo.entity.UserWithUrl;
+import com.example.pojo.dto.UrlUploadDTO;
+import com.example.pojo.entity.Url;
 import com.example.pojo.result.Result;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +18,7 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -39,15 +43,19 @@ public class CommonServiceImpl implements CommonService {
 
     @Autowired
     private CommonMapper commonMapper;
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public Result upload(MultipartFile file) {
-        if(file == null) {
-            return Result.error("请选择文件");
+    public Result upload(UrlUploadDTO urlUploadDTO) {
+        if(urlUploadDTO.getName() == null || urlUploadDTO.getFile().isEmpty()) {
+            return Result.error("参数错误");
         }
 
-        if(file.getSize() > 1024 * 1024 * 10) {
-            return Result.error("文件大小不能超过10M");
+        MultipartFile file = urlUploadDTO.getFile();
+
+        if(file.getSize() >= 1024 * 1024 * 10) {
+            return Result.error("文件过大");
         }
 
         String key = LockConstant.USER_LOCK_UPLOAD + BaseConstant.getCurrentUser();
@@ -60,7 +68,7 @@ public class CommonServiceImpl implements CommonService {
             if(!b) {
                 return Result.error("获取锁失败");
             }
-            return tryUpload(file);
+            return tryUpload(file, urlUploadDTO);
         } catch (Exception e) {
             log.error("上传文件异常：{}", e.getMessage());
             return Result.error("上传文件异常");
@@ -72,7 +80,7 @@ public class CommonServiceImpl implements CommonService {
     }
 
     @Transactional(rollbackFor = RuntimeException.class)
-    public Result tryUpload(MultipartFile file) {
+    public Result tryUpload(MultipartFile file, UrlUploadDTO urlUploadDTO) {
         try {
             String originalFilename = file.getOriginalFilename();
             String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
@@ -83,14 +91,16 @@ public class CommonServiceImpl implements CommonService {
             String fileName = UUID.randomUUID(true).toString() + extension;
             String upload = ossUtils.upload(fileName, file.getBytes());
             Integer currentUser = BaseConstant.getCurrentUser();
-            String msg = upload + ":" + currentUser;
+            String msgR = upload + ":" + currentUser;
+            String megM = msgR + ":" + urlUploadDTO.getIntroduce() + ":" + urlUploadDTO.getName();
 
-            UserWithUrl userWithUrl = commonMapper.getByUrl(upload);
-            if(userWithUrl != null) {
+            Url url = commonMapper.getByUrl(upload);
+            if(url != null) {
                 return Result.error("地址已存在");
             }
 
-            commonMapper.insert(currentUser, upload, LocalDateTime.now());
+            rabbitTemplate.convertAndSend("redis", "url", msgR);
+            rabbitTemplate.convertAndSend("mysql", "url", megM);
             return Result.success(upload);
         } catch (IOException e) {
             log.error("上传文件异常：{}", e.getMessage());
@@ -99,27 +109,69 @@ public class CommonServiceImpl implements CommonService {
     }
 
 
-    // TODO
-//    @Override
-public Result getUrl(Integer id) {
-//        if(id == null || id <= 0) {
-//            return Result.error("id不能为空");
-//        }
-//
-//        String key = LockConstant.USER_LOCK_GETURL + BaseConstant.getCurrentUser();
-//        RLock lock = redisson.getLock(key);
-//        boolean b = false;
-//
-//        log.info("获取url：{}", id);
-//        try {
-//            b = lock.tryLock(1, 30, TimeUnit.SECONDS);
-//            if(!b) {
-//                return Result.error("获取锁失败");
-//            }
-//        } catch (Exception e) {
-//            return Result.error("获取锁异常");
-//        }
-//
-        return Result.success();
-   }
+
+     @Override
+     public Result getUrl(Integer id) {
+        if(id == null || id <= 0) {
+            return Result.error("id不能为空");
+        }
+
+        String key = LockConstant.USER_LOCK_GETURL + BaseConstant.getCurrentUser();
+        RLock lock = redisson.getLock(key);
+        boolean b = false;
+
+        log.info("获取url：{}", id);
+        try {
+            String json = stringRedisTemplate.opsForValue().get(RedisConstant.USER_GETURL + id);
+            if(json != null) {
+                if ("".equals(json)) {
+                    stringRedisTemplate.expire(RedisConstant.USER_GETURL + id, 10, TimeUnit.MINUTES);
+                    return Result.error("url不存在");
+                }
+                Url url = JSON.parseObject(json, Url.class);
+                return Result.success(url);
+            }
+        } catch (Exception e) {
+            return Result.error("查询url异常");
+        }
+
+        try {
+            b = lock.tryLock(1, 30, TimeUnit.SECONDS);
+            if(!b) {
+                return Result.error("获取锁失败");
+            }
+            return tryGetUrl(id);
+        } catch (InterruptedException e) {
+            log.error("获取锁异常：{}", e.getMessage());
+        } finally {
+            if(b && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
+
+        return Result.error("获取url异常");
+     }
+
+
+    public Result tryGetUrl(Integer id) {
+        String json = stringRedisTemplate.opsForValue().get(RedisConstant.USER_GETURL + id);
+        if(json != null) {
+            if ("".equals(json)) {
+                stringRedisTemplate.expire(RedisConstant.USER_GETURL + id, 10, TimeUnit.MINUTES);
+                return Result.error("url不存在");
+            }
+            Url url = JSON.parseObject(json, Url.class);
+            return Result.success(url);
+        }
+
+        Url url = commonMapper.getById(id);
+        if(url == null) {
+            stringRedisTemplate.opsForValue().set(RedisConstant.USER_GETURL + id, "", 10, TimeUnit.MINUTES);
+            return Result.error("url不存在");
+        }
+
+        stringRedisTemplate.opsForValue().set(RedisConstant.USER_GETURL + id, JSON.toJSONString(url), 10, TimeUnit.MINUTES);
+        return Result.success(url);
+    }
+
 }
