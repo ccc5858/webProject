@@ -30,3 +30,5 @@ spring:
         concurrency: 5 # 消费者并发数（根据业务调整）
         max-concurrency: 10 # 最大并发数
 
+
+

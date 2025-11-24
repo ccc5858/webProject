@@ -47,12 +47,10 @@ public class CommonServiceImpl implements CommonService {
     private StringRedisTemplate stringRedisTemplate;
 
     @Override
-    public Result upload(UrlUploadDTO urlUploadDTO) {
-        if(urlUploadDTO.getName() == null || urlUploadDTO.getFile().isEmpty()) {
+    public Result upload(String introduce, String name, MultipartFile file) {
+        if(name.isEmpty() || file.isEmpty() || introduce.isEmpty()) {
             return Result.error("参数错误");
         }
-
-        MultipartFile file = urlUploadDTO.getFile();
 
         if(file.getSize() >= 1024 * 1024 * 10) {
             return Result.error("文件过大");
@@ -68,7 +66,7 @@ public class CommonServiceImpl implements CommonService {
             if(!b) {
                 return Result.error("获取锁失败");
             }
-            return tryUpload(file, urlUploadDTO);
+            return tryUpload(file, introduce, name);
         } catch (Exception e) {
             log.error("上传文件异常：{}", e.getMessage());
             return Result.error("上传文件异常");
@@ -80,7 +78,7 @@ public class CommonServiceImpl implements CommonService {
     }
 
     @Transactional(rollbackFor = RuntimeException.class)
-    public Result tryUpload(MultipartFile file, UrlUploadDTO urlUploadDTO) {
+    public Result tryUpload(MultipartFile file, String introduce, String name) {
         try {
             String originalFilename = file.getOriginalFilename();
             String extension = originalFilename.substring(originalFilename.lastIndexOf("."));
@@ -91,8 +89,8 @@ public class CommonServiceImpl implements CommonService {
             String fileName = UUID.randomUUID(true).toString() + extension;
             String upload = ossUtils.upload(fileName, file.getBytes());
             Integer currentUser = BaseConstant.getCurrentUser();
-            String msgR = upload + ":" + currentUser;
-            String megM = msgR + ":" + urlUploadDTO.getIntroduce() + ":" + urlUploadDTO.getName();
+            String msgR = upload + "@" + currentUser;
+            String megM = msgR + "@" + introduce + "@" + name;
 
             Url url = commonMapper.getByUrl(upload);
             if(url != null) {

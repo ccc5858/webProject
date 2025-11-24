@@ -54,7 +54,7 @@ public class MysqlListener {
     )
     public void listenerUrl(String message) {
         log.info("mysql: {}", message);
-        String[] messages = message.split(":");
+        String[] messages = message.split("@");
         commonMapper.insert(Integer.parseInt(messages[1]), messages[0], LocalDateTime.now(), messages[2], messages[3]);
     }
 

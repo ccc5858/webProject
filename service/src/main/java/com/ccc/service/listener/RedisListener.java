@@ -75,10 +75,14 @@ public class RedisListener {
           )
     )
     public void listenerUrl(String message) {
+        if(message.length() < 4) {
+            log.error("url消息异常");
+            return;
+        }
         try {
-            String[] split = message.split(":");
+            String[] split = message.split("@");
             log.info("监听到url消息：{}", message);
-            redisTemplate.opsForValue().set(RedisConstant.USER_GETURL + split[1], split[0]);
+            redisTemplate.opsForSet().add(RedisConstant.USER_UPLOAD + split[1], split[0]);
         } catch (Exception e) {
             log.error("监听url消息异常：{}", e.getMessage());
         }
@@ -98,7 +102,7 @@ public class RedisListener {
     )
     public void listenerUrlDelete(String message) {
         try {
-            log.info("监听到url删除消息：{}", message);
+            log.info("监听到user删除消息：{}", message);
             redisTemplate.delete(RedisConstant.USER_INFO + message);
         } catch (Exception e) {
             log.error("监听user删除消息异常：{}", e.getMessage());

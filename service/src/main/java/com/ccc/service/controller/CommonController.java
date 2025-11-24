@@ -15,7 +15,7 @@ public class CommonController {
     private CommonService commonService;
 
     @PostMapping("/upload")
-    public Result upload(@RequestBody UrlUploadDTO urlUploadDTO) {return commonService.upload(urlUploadDTO);}
+    public Result upload(String introduce, String name,MultipartFile file) {return commonService.upload(introduce, name, file);}
 
     @GetMapping("/get/{id}")
     public Result get(@PathVariable Integer id) {return commonService.getUrl(id);}

@@ -13,6 +13,4 @@ public class UserSelectPage {
 
     private Integer pageSize;
 
-    private String username;
-
 }

@@ -10,8 +10,6 @@ import org.springframework.web.multipart.MultipartFile;
 @NoArgsConstructor
 public class UrlUploadDTO {
 
-    private MultipartFile file;
-
     private String introduce;
 
     private String name;

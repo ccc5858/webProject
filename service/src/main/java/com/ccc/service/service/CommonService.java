@@ -5,7 +5,7 @@ import com.example.pojo.result.Result;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface CommonService {
-    Result upload(UrlUploadDTO urlUploadDTO);
+    Result upload(String introduce, String name, MultipartFile file);
 
     Result getUrl(Integer id);
 }
