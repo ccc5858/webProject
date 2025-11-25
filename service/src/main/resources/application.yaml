@@ -12,10 +12,23 @@ spring:
       host: localhost
       port: 6379
       password: chenzhiqi585812
+      timeout: 10000
+
   rabbitmq:
     host: 192.168.6.102 # ?????IP
     port: 5672 # ??
     virtual-host: / # ????
     username: ccc # ???
     password: 123 # ??
+    publisher-confirm-type: correlated # 开启发布确认（可选，确保消息发送到交换机）
+    template:
+      mandatory: true # 确保消息路由失败时返回给生产者
+      delivery-mode: persistent # 消息持久化（关键，配合队列持久化）
+    listener:
+      simple:
+        acknowledge-mode: manual # 手动ACK（关键，避免消费失败自动重试导致消息丢失）
+        concurrency: 5 # 消费者并发数（根据业务调整）
+        max-concurrency: 10 # 最大并发数
+
+
 

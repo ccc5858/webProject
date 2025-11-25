@@ -2,9 +2,10 @@ package com.ccc.service.service;
 
 import com.example.pojo.dto.UserLoginDTO;
 import com.example.pojo.dto.UserRegisterDTO;
-import com.example.pojo.dto.UserSelectPage;
-import com.example.pojo.entity.User;
+import com.example.pojo.dto.UserPageDTO;
+import com.example.pojo.dto.UserUpdateDTO;
 import com.example.pojo.result.Result;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface UserService {
     Result login(UserLoginDTO userLoginDTO);
@@ -13,9 +14,13 @@ public interface UserService {
 
     Result register(UserRegisterDTO userRegisterDTO);
 
-    Result getUser(UserSelectPage userSelectPage);
+    Result getUser(UserPageDTO userPageDTO);
 
-    Result update(User user);
+    Result update(UserUpdateDTO user);
 
     Result delete(Integer id);
+
+    String text();
+
+    Result updateImg(MultipartFile file);
 }

@@ -7,15 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserRegisterDTO {
+public class UrlPageDTO {
 
-    private String username;
+    private Integer page;
 
-    private String password;
+    private Integer pageNum;
 
-    private String confirmPassword;
-
-    private int sex;
-
-    private int age;
+    private String introduce;
 }

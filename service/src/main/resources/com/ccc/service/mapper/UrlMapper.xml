@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ccc.service.mapper.UrlMapper">
+    <insert id="insert">
+        insert into url(url, user_id, upload_time, introduce, name) values (#{url}, #{userId}, #{uploadTime}, #{introduce}, #{name})
+    </insert>
+    <update id="update" parameterType="com.example.pojo.entity.Url">
+        update url set url = #{url}, upload_time = #{uploadTime}, name = #{name}, version = #{version} + 1
+                       <if test="introduce != null">introduce = #{introduce}</if>
+        where id = #{id} and version = #{version}
+    </update>
+    <select id="getByPage" resultType="com.example.pojo.entity.Url" parameterType="java.lang.String">
+        select * from url
+        <where>
+            <if test="introduce != null">
+                introduce like concat('%', #{introduce}, '%')
+            </if>
+        </where>
+    </select>
+</mapper>

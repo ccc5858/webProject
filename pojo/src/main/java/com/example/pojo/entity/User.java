@@ -21,4 +21,6 @@ public class User {
     private Integer age;
 
     private Integer version;
+
+    private String img;
 }

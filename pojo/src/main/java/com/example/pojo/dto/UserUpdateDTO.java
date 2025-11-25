@@ -1,22 +1,25 @@
-package com.example.pojo.vo;
-
+package com.example.pojo.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserVO {
+public class UserUpdateDTO {
 
     private String username;
+
+    private String password;
+
+    private String confirmPassword;
+
+    private String oldPassword;
 
     private int sex;
 
     private int age;
 
-    private Set<String> urlList;
+    private String img;
 }
