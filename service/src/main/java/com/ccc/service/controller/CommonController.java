@@ -12,9 +12,14 @@ public class CommonController {
     @Autowired
     private CommonService commonService;
 
-    @GetMapping("/like/{urlId}/{userId}")
-    public Result like(@PathVariable Integer urlId, @PathVariable Integer userId) {
-       return commonService.like(urlId, userId);
+    @GetMapping("/like/{urlId}")
+    public Result like(@PathVariable Integer urlId) {
+       return commonService.like(urlId);
+    }
+
+    @GetMapping("/unlike/{userId}")
+    public Result subscribe(@PathVariable Integer userId) {
+        return commonService.subscribe(userId);
     }
 
 }

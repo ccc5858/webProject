@@ -23,4 +23,6 @@ public class User {
     private Integer version;
 
     private String img;
+
+    private Integer subCount;
 }

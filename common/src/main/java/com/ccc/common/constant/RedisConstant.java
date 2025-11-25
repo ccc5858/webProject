@@ -6,4 +6,5 @@ public class RedisConstant {
     public static final String USER_GETURL = "user:geturl:";
     public static final String USER_UPLOAD = "user:upload:";
     public static final String COMMON_LIKE = "common:like:";
+    public static final String COMMON_SUBSCRIBE = "common:subscribe:";
 }
