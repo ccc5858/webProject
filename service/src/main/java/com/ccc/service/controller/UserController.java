@@ -3,9 +3,8 @@ package com.ccc.service.controller;
 import com.ccc.service.service.UserService;
 import com.example.pojo.dto.UserLoginDTO;
 import com.example.pojo.dto.UserRegisterDTO;
-import com.example.pojo.dto.UserSelectPage;
+import com.example.pojo.dto.UserPageDTO;
 import com.example.pojo.dto.UserUpdateDTO;
-import com.example.pojo.entity.User;
 import com.example.pojo.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -34,8 +33,8 @@ public class UserController {
     }
 
     @PostMapping("/page/getUser")
-    public Result getUser(UserSelectPage userSelectPage) {
-        return userService.getUser(userSelectPage);
+    public Result getUser(UserPageDTO userPageDTO) {
+        return userService.getUser(userPageDTO);
     }
 
     @PostMapping("/update")
@@ -47,6 +46,9 @@ public class UserController {
     public Result delete(@PathVariable Integer id) {
         return userService.delete(id);
     }
+
+    @PostMapping("/update/img")
+    public Result updateImg(MultipartFile file) {return userService.updateImg(file);}
 
 
 }

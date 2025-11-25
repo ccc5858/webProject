@@ -25,4 +25,7 @@ public interface UserMapper {
     void delete(Integer id);
 
     int update(User user);
+
+    @Insert("update user set img = #{url} where id = #{currentUser}")
+    void updateImg(Integer currentUser, String img);
 }

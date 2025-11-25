@@ -14,7 +14,7 @@ import com.ccc.service.mapper.UserMapper;
 import com.ccc.service.service.UserService;
 import com.example.pojo.dto.UserLoginDTO;
 import com.example.pojo.dto.UserRegisterDTO;
-import com.example.pojo.dto.UserSelectPage;
+import com.example.pojo.dto.UserPageDTO;
 import com.example.pojo.dto.UserUpdateDTO;
 import com.example.pojo.entity.User;
 import com.example.pojo.result.Result;
@@ -26,7 +26,6 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -54,6 +53,9 @@ public class UserServiceImpl implements UserService {
 
     @Autowired
     private RedissonClient redisson;
+
+    @Autowired
+    private AliOssUtils aliOssUtils;
 
     @Override
     public Result login(UserLoginDTO userLoginDTO) {
@@ -96,7 +98,7 @@ public class UserServiceImpl implements UserService {
             claims.put("id", user.getId());
             token = JwtUtils.createToken(jwtProperties.getSecretKey(), jwtProperties.getTtl(), claims);
             String msg = user.getId() + ":" + token;
-            rabbitTemplate.convertAndSend("redis", "jwt", msg);
+            redisTemplate.opsForValue().set(RedisConstant.USER_TOKEN + user.getId(), token, 10, TimeUnit.MINUTES);
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -237,18 +239,18 @@ public class UserServiceImpl implements UserService {
         User newUser = new User();
         BeanUtil.copyProperties(userRegisterDTO, newUser);
         String msg = JSON.toJSONString(newUser);
-        rabbitTemplate.convertAndSend("mysql", "user", msg);
+        rabbitTemplate.convertAndSend("mysql", "user.insert", msg);
 
         return Result.success();
     }
 
     @Override
-    public Result getUser(UserSelectPage userSelectPage) {
-        if(userSelectPage == null) {
+    public Result getUser(UserPageDTO userPageDTO) {
+        if(userPageDTO == null) {
             return Result.error("参数错误");
         }
 
-        log.info("分页查询用户：{}", userSelectPage);
+        log.info("分页查询用户：{}", userPageDTO);
         String key = LockConstant.USER_LOCK_GETUSER + BaseConstant.getCurrentUser();
         List<User> result = new ArrayList<>();
 
@@ -261,7 +263,7 @@ public class UserServiceImpl implements UserService {
                 return Result.error("获取锁失败");
             }
 
-            return tryGetUser(userSelectPage, result);
+            return tryGetUser(userPageDTO, result);
         } catch (Exception e) {
             log.error("分页查询用户异常：{}", e.getMessage());
         } finally {
@@ -274,11 +276,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Transactional(rollbackFor = RuntimeException.class)
-    public Result tryGetUser(UserSelectPage userSelectPage, List<User> result) {
-        PageHelper.startPage(userSelectPage.getPageNum(), userSelectPage.getPageSize());
+    public Result tryGetUser(UserPageDTO userPageDTO, List<User> result) {
+        PageHelper.startPage(userPageDTO.getPageNum(), userPageDTO.getPageSize());
 
         User user = new User();
-        BeanUtil.copyProperties(userSelectPage, user);
+        BeanUtil.copyProperties(userPageDTO, user);
 
         Page<User> page = userMapper.getUser(user);
         result = page.getResult();
@@ -352,7 +354,8 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("数据已被其他用户修改，请刷新后重试（最新版本号：" + latestVersion + "）");
         }
 
-        rabbitTemplate.convertAndSend("mysql", "user", user);
+        rabbitTemplate.convertAndSend("redis", "user.delete", user);
+        rabbitTemplate.convertAndSend("mysql", "user.insert", user);
         return Result.success();
     }
 
@@ -399,6 +402,49 @@ public class UserServiceImpl implements UserService {
     @Override
     public String text() {
         return "text";
+    }
+
+    @Override
+    public Result updateImg(MultipartFile file) {
+        if(file == null) {
+            return Result.error("请选择图片");
+        }
+
+        log.info("上传图片：{}", file);
+        RLock lock = redisson.getLock(LockConstant.USER_LOCK_UPDATE_IMG + BaseConstant.getCurrentUser());
+        boolean b = false;
+
+        try {
+            b = lock.tryLock(3, 5, TimeUnit.SECONDS);
+            if(!b) {
+                return Result.error("获取锁失败");
+            }
+
+            return tryUpdateImg(file);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } finally {
+            if(b && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
+    }
+
+    @Transactional(rollbackFor = RuntimeException.class)
+    public Result tryUpdateImg(MultipartFile file) {
+        String originalFilename = file.getOriginalFilename();
+        String suffix = originalFilename.substring(originalFilename.lastIndexOf("."));
+        String uuid = UUID.randomUUID().toString();
+        String fileName = uuid + suffix;
+
+        try {
+            String url = aliOssUtils.upload(fileName, file.getBytes());
+            userMapper.updateImg(BaseConstant.getCurrentUser(), url);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return Result.success();
     }
 
 }

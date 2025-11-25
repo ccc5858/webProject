@@ -9,4 +9,9 @@ public class LockConstant {
     public static final String USER_LOCK_LOGIN = "user:lock:login:";
     public static final String USER_LOCK_GETID = "user:lock:getid:";
     public static final String USER_LOCK_GETURL = "user:lock:geturl:";
+    public static final String URL_LOCK_UPDATE = "url:lock:update:";
+    public static final String USER_LOCK_UPDATE_IMG = "user:lock:update:img:";
+    public static final String URL_LOCK_DELETE = "url:lock:delete:";
+    public static final String URL_LOCK_PAGE = "url:lock:page:";
+
 }

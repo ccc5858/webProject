@@ -7,19 +7,12 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserUpdateDTO {
+public class UserPageDTO {
 
     private String username;
 
-    private String password;
+    private Integer pageNum;
 
-    private String confirmPassword;
+    private Integer pageSize;
 
-    private String oldPassword;
-
-    private int sex;
-
-    private int age;
-
-    private String img;
 }

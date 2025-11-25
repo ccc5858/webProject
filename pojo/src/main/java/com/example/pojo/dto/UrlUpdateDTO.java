@@ -7,10 +7,11 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserSelectPage {
+public class UrlUpdateDTO {
 
-    private Integer pageNum;
+    String url;
 
-    private Integer pageSize;
+    String introduce;
 
+    String name;
 }

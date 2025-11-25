@@ -56,4 +56,5 @@ public class AliOssUtils {
 
         return stringBuilder.toString();
     }
+
 }

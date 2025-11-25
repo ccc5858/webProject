@@ -21,4 +21,6 @@ public class Url {
     private String introduce;
 
     private String name;
+
+    private Integer version;
 }

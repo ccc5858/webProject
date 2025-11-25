@@ -49,7 +49,7 @@ public class RedisListener {
                             @Argument(name = "x-dead-letter-routing-key", value = "dead"),
                             @Argument(name = "x-max-length", value = "1000", type = "java.lang.Integer")
                     }),
-                    key = "user"
+                    key = "user.insert"
             )
     )
     public void listenerUser(String message) {
@@ -71,7 +71,7 @@ public class RedisListener {
                           @Argument(name = "x-dead-letter-routing-key", value = "dead"),
                           @Argument(name = "x-max-length", value = "1000", type = "java.lang.Integer")
                   }),
-                  key = "url"
+                  key = "url.insert"
           )
     )
     public void listenerUrl(String message) {
@@ -97,15 +97,42 @@ public class RedisListener {
                           @Argument(name = "x-dead-letter-routing-key", value = "dead"),
                           @Argument(name = "x-max-length", value = "1000", type = "java.lang.Integer")
                   }),
-                  key = "user"
+                  key = "user.delete"
           )
     )
-    public void listenerUrlDelete(String message) {
+    public void listenerUserDelete(String message) {
         try {
             log.info("监听到user删除消息：{}", message);
             redisTemplate.delete(RedisConstant.USER_INFO + message);
         } catch (Exception e) {
             log.error("监听user删除消息异常：{}", e.getMessage());
+        }
+    }
+
+    @RabbitListener(bindings =
+          @QueueBinding(
+                  exchange = @Exchange(value = "redis", durable = "true"),
+                  value = @Queue(value = "url.redis.delete", durable = "true", arguments = {
+                          @Argument(name = "x-message-ttl", value = "30000", type = "java.lang.Long"),
+                          @Argument(name = "x-dead-letter-exchange", value = "url.dead"),
+                          @Argument(name = "x-dead-letter-routing-key", value = "dead"),
+                          @Argument(name = "x-max-length", value = "1000", type = "java.lang.Integer")
+                  }),
+                  key = "url"
+          )
+    )
+    public void listenerUrlDelete(String message) {
+        try {
+            log.info("监听到url删除消息：{}", message);
+            String[] split = message.split("@");
+            String s = redisTemplate.opsForValue().get(RedisConstant.USER_GETURL + split[0]);
+            if(s != null) {
+                redisTemplate.delete(RedisConstant.USER_GETURL + message);
+            }
+
+            redisTemplate.opsForSet().remove(RedisConstant.USER_UPLOAD + message, split[1]);
+        } catch (Exception e) {
+            log.error("监听url删除消息异常：{}", e.getMessage());
         }
     }
 }
