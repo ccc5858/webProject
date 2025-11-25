@@ -7,8 +7,15 @@
         insert into url(url, user_id, upload_time, introduce, name) values (#{url}, #{userId}, #{uploadTime}, #{introduce}, #{name})
     </insert>
     <update id="update" parameterType="com.example.pojo.entity.Url">
-        update url set url = #{url}, upload_time = #{uploadTime}, name = #{name}, version = #{version} + 1
-                       <if test="introduce != null">introduce = #{introduce}</if>
+        update url set
+                       url = #{url},
+                       upload_time = #{uploadTime},
+                       name = #{name},
+                       version = #{version} + 1,
+                       like_count = #{likeCount},
+        <if test="introduce != null">
+                       introduce = #{introduce}
+        </if>
         where id = #{id} and version = #{version}
     </update>
     <select id="getByPage" resultType="com.example.pojo.entity.Url" parameterType="java.lang.String">

@@ -13,5 +13,6 @@ public class LockConstant {
     public static final String USER_LOCK_UPDATE_IMG = "user:lock:update:img:";
     public static final String URL_LOCK_DELETE = "url:lock:delete:";
     public static final String URL_LOCK_PAGE = "url:lock:page:";
+    public static final String COMMON_LOCK_LIKE = "common:lock:like:";
 
 }

@@ -32,9 +32,9 @@ public class UserController {
         return userService.register(userRegisterDTO);
     }
 
-    @PostMapping("/page/getUser")
-    public Result getUser(UserPageDTO userPageDTO) {
-        return userService.getUser(userPageDTO);
+    @PostMapping("/page/getPageUser")
+    public Result getPageUser(UserPageDTO userPageDTO) {
+        return userService.getPageUser(userPageDTO);
     }
 
     @PostMapping("/update")

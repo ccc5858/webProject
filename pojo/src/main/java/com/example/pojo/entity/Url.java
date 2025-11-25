@@ -23,4 +23,6 @@ public class Url {
     private String name;
 
     private Integer version;
+
+    private int likeCount;
 }

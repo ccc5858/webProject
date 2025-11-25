@@ -245,7 +245,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Result getUser(UserPageDTO userPageDTO) {
+    public Result getPageUser(UserPageDTO userPageDTO) {
         if(userPageDTO == null) {
             return Result.error("参数错误");
         }

@@ -14,7 +14,7 @@ public interface UserService {
 
     Result register(UserRegisterDTO userRegisterDTO);
 
-    Result getUser(UserPageDTO userPageDTO);
+    Result getPageUser(UserPageDTO userPageDTO);
 
     Result update(UserUpdateDTO user);
 

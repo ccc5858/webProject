@@ -57,6 +57,7 @@ public class RedisListener {
             log.info("监听到用户消息：{}", message);
             User user = JSON.parseObject(message, User.class);
             redisTemplate.opsForValue().set(RedisConstant.USER_INFO + user.getId(), message);
+            redisTemplate.expire(RedisConstant.USER_INFO + user.getId(), 60 * 60 * 24 * 7, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("监听用户消息异常：{}", e.getMessage());
         }
@@ -83,6 +84,7 @@ public class RedisListener {
             String[] split = message.split("@");
             log.info("监听到url消息：{}", message);
             redisTemplate.opsForSet().add(RedisConstant.USER_UPLOAD + split[1], split[0]);
+            redisTemplate.expire(RedisConstant.USER_UPLOAD + split[1], 60 * 60 * 24 * 7, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("监听url消息异常：{}", e.getMessage());
         }
@@ -118,7 +120,7 @@ public class RedisListener {
                           @Argument(name = "x-dead-letter-routing-key", value = "dead"),
                           @Argument(name = "x-max-length", value = "1000", type = "java.lang.Integer")
                   }),
-                  key = "url"
+                  key = "url.delete"
           )
     )
     public void listenerUrlDelete(String message) {
