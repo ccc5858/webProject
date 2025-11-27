@@ -1,9 +1,11 @@
 package com.ccc.service.listener;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.ccc.common.constant.RedisConstant;
 import com.ccc.common.properties.JwtProperties;
 import com.esotericsoftware.kryo.serializers.FieldSerializer;
+import com.example.pojo.entity.Comment;
 import com.example.pojo.entity.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.*;
@@ -11,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -135,6 +138,30 @@ public class RedisListener {
             redisTemplate.opsForSet().remove(RedisConstant.USER_UPLOAD + message, split[1]);
         } catch (Exception e) {
             log.error("监听url删除消息异常：{}", e.getMessage());
+        }
+    }
+
+    @RabbitListener(bindings =
+          @QueueBinding(
+                  exchange = @Exchange(value = "redis", durable = "true"),
+                  value = @Queue(value = "comment.redis.delete", durable = "true", arguments = {
+                          @Argument(name = "x-message-ttl", value = "30000", type = "java.lang.Long"),
+                          @Argument(name = "x-dead-letter-exchange", value = "comment.dead"),
+                          @Argument(name = "x-dead-letter-routing-key", value = "dead"),
+                          @Argument(name = "x-max-length", value = "1000", type = "java.lang.Integer")
+                  }),
+                  key = "comment.delete"
+          )
+    )
+    public void listenerCommentDelete(JSONArray message) {
+        try {
+            log.info("监听到comment删除消息：{}", message);
+            List<Comment> list = JSON.parseArray(message.toString(), Comment.class);
+            for(Comment comment : list) {
+                redisTemplate.delete(RedisConstant.COMMENT_LIKE + comment.getUrlId() + ":" + comment.getParentId() + ":" + comment.getId());
+            }
+        } catch (Exception e) {
+            log.error("监听comment删除消息异常：{}", e.getMessage());
         }
     }
 }

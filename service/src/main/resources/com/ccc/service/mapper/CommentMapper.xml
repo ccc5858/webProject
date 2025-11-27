@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ccc.service.mapper.CommentMapper">
+    <insert id="add">
+        insert into comment(user_id, url_id, message, create_time, parent_id, curr_user_id)
+        values (#{commentAddDTO.userId}, #{commentAddDTO.urlId}, #{commentAddDTO.content}, #{now}, #{commentAddDTO.parentId}, #{id})
+    </insert>
+    <update id="update" parameterType="com.example.pojo.entity.Comment">
+        update comment set message = #{message}, version = #{version} + 1, like_count = #{likeCount} where id = #{id} and version = #{version}
+    </update>
+    <delete id="deleteList" parameterType="java.util.List">
+        delete from comment where id in
+            <foreach collection="comments" item="comment" open="(" close=")" separator=",">
+                            #{comment.id}
+            </foreach>
+    </delete>
+    <select id="getPage" resultType="com.example.pojo.entity.Comment"
+            parameterType="com.example.pojo.dto.CommentPageDTO">
+        select * from comment where url_id = #{urlId} and parent_id = #{parentId}
+    </select>
+</mapper>

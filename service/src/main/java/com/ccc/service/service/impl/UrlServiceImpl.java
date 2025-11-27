@@ -2,15 +2,17 @@ package com.ccc.service.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.ccc.common.constant.LockConstant;
 import com.ccc.common.constant.RedisConstant;
 import com.ccc.common.threadLocal.BaseConstant;
 import com.ccc.common.utils.AliOssUtils;
+import com.ccc.service.mapper.CommentMapper;
 import com.ccc.service.mapper.UrlMapper;
 import com.ccc.service.service.UrlService;
 import com.example.pojo.dto.UrlPageDTO;
 import com.example.pojo.dto.UrlUpdateDTO;
+import com.example.pojo.entity.Comment;
 import com.example.pojo.entity.Url;
 import com.example.pojo.result.Result;
 import com.github.pagehelper.Page;
@@ -47,8 +49,12 @@ public class UrlServiceImpl implements UrlService {
 
     @Autowired
     private UrlMapper urlMapper;
+
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private CommentMapper commentMapper;
 
     @Override
     public Result upload(String introduce, String name, MultipartFile file) {
@@ -282,9 +288,18 @@ public class UrlServiceImpl implements UrlService {
             return Result.error("url不存在");
         }
 
+        if(byId.getUserId() != BaseConstant.getCurrentUser()) {
+            log.warn("用户没有权限删除该url：{}", id);
+        }
+
         String url = byId.getUrl();
 
         try {
+            List<Comment> comments = commentMapper.getByUrlId(id);
+            if(comments != null && !comments.isEmpty()) {
+                rabbitTemplate.convertAndSend("redis", "comment.delete", JSON.toJSON(comments));
+                rabbitTemplate.convertAndSend("mysql", "comment.delete", JSON.toJSON(comments));
+            }
             rabbitTemplate.convertAndSend("redis", "url.delete", id + "@" + url);
             rabbitTemplate.convertAndSend("mysql", "url.delete", id);
             return Result.success("删除成功");

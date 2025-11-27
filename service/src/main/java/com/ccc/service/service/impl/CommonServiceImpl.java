@@ -152,12 +152,17 @@ public class CommonServiceImpl implements CommonService {
         }
         byId.setSubCount(byId.getSubCount() - 1);
 
+        try {
         int row = userMapper.update(byId);
         if(row == 0) {
             log.warn("更新用户失败：{}", userId);
             throw new RuntimeException("更新失败");
         }
         stringRedisTemplate.opsForSet().remove(RedisConstant.COMMON_SUBSCRIBE + userId, String.valueOf(currentUser));
+        } catch (Exception e) {
+            log.warn("更新用户异常：{}", e.getMessage());
+            throw new RuntimeException("更新失败");
+        }
         return Result.success();
     }
 
@@ -171,12 +176,17 @@ public class CommonServiceImpl implements CommonService {
         }
         byId.setSubCount(byId.getSubCount() + 1);
 
-        int row = userMapper.update(byId);
-        if(row == 0) {
-            log.warn("更新用户失败：{}", userId);
+        try {
+            int row = userMapper.update(byId);
+            if (row == 0) {
+                log.warn("更新用户失败：{}", userId);
+                throw new RuntimeException("更新失败");
+            }
+            stringRedisTemplate.opsForSet().add(RedisConstant.COMMON_SUBSCRIBE + userId, String.valueOf(currentUser));
+        } catch (Exception e) {
+            log.warn("更新用户异常：{}", e.getMessage());
             throw new RuntimeException("更新失败");
         }
-        stringRedisTemplate.opsForSet().add(RedisConstant.COMMON_SUBSCRIBE + userId, String.valueOf(currentUser));
         return Result.success();
     }
 }
