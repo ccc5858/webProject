@@ -5,6 +5,9 @@ import com.example.pojo.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 订阅 喜欢
+ */
 @RestController
 @RequestMapping("/common")
 public class CommonController {
@@ -17,7 +20,7 @@ public class CommonController {
        return commonService.like(urlId);
     }
 
-    @GetMapping("/unlike/{userId}")
+    @GetMapping("/subscribe/{userId}")
     public Result subscribe(@PathVariable Integer userId) {
         return commonService.subscribe(userId);
     }

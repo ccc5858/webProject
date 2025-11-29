@@ -7,6 +7,9 @@ import com.example.pojo.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+/**
+ * 评论
+ */
 @RestController
 @RequestMapping("/comment")
 public class CommentController {
