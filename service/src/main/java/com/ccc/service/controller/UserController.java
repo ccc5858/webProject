@@ -10,6 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+/**
+ * 用户控制层
+ */
 @RestController
 @RequestMapping("/user")
 public class UserController {
@@ -32,9 +35,9 @@ public class UserController {
         return userService.register(userRegisterDTO);
     }
 
-    @PostMapping("/page/getUser")
-    public Result getUser(UserPageDTO userPageDTO) {
-        return userService.getUser(userPageDTO);
+    @PostMapping("/page/getPageUser")
+    public Result getPageUser(UserPageDTO userPageDTO) {
+        return userService.getPageUser(userPageDTO);
     }
 
     @PostMapping("/update")

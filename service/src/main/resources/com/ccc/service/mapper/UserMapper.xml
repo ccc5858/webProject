@@ -18,6 +18,7 @@
             <if test="age != null">
                 age = #{age},
             </if>
+            sub_count = #{subCount},
             version = #{version} + 1
         </set>
         where id = #{id} and version = #{version}

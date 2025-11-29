@@ -31,4 +31,11 @@ spring:
         max-concurrency: 10 # 最大并发数
 
 
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.demo.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+
 

@@ -10,21 +10,22 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Url {
-
+public class Comment {
     private Integer id;
-
-    private String url;
 
     private Integer userId;
 
-    private LocalDateTime uploadTime;
+    private Integer urlId;
 
-    private String introduce;
+    private Integer currUserId;
 
-    private String name;
+    private String message;
+
+    private LocalDateTime createTime;
+
+    private Integer likeCount;
 
     private Integer version;
 
-    private int likeCount;
+    private Integer parentId;
 }
