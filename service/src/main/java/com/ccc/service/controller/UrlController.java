@@ -5,6 +5,7 @@ import com.example.pojo.dto.UrlPageDTO;
 import com.example.pojo.dto.UrlUpdateDTO;
 import com.example.pojo.result.Result;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -32,4 +33,9 @@ public class UrlController {
 
     @PostMapping("/page/select")
     public Result pageSelect(@RequestBody UrlPageDTO urlPageDTO) {return urlService.pageSelect(urlPageDTO);}
+
+    @GetMapping("/download/{id}")
+    public ResponseEntity<byte[]> download(@PathVariable Integer id) {
+        return urlService.download(id);
+    }
 }

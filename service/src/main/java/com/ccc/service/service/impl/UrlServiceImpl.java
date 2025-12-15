@@ -24,11 +24,13 @@ import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -339,5 +341,62 @@ public class UrlServiceImpl implements UrlService {
         return Result.success(result);
     }
 
+    @Override
+    public ResponseEntity<byte[]> download(Integer id) {
+        if(id == null || id <= 0) {
+            return ResponseEntity.badRequest().body("id不能为空".getBytes(StandardCharsets.UTF_8));
+        }
+
+        String key = LockConstant.URL_LOCK_DOWNLOAD + BaseConstant.getCurrentUser();
+        RLock lock = redisson.getLock(key);
+        boolean b = false;
+
+        log.info("下载url：{}", id);
+
+        try {
+            b = lock.tryLock(3, 5, TimeUnit.SECONDS);
+            if(!b) {
+                return ResponseEntity.status(HttpStatus.LOCKED).body("获取锁失败".getBytes(StandardCharsets.UTF_8));
+            }
+            Result result = tryDownload(id);
+            if(result.getCode() != 1) {
+                return ResponseEntity.status(500).body(null);
+            }
+
+            byte[] fileBytes = (byte[]) result.getData();
+
+            String fileName = "downloaded-file.pdf";
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+            headers.setContentDisposition(ContentDisposition.builder("attachment").filename(fileName).build());
+
+            return new ResponseEntity<>(fileBytes, headers, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("获取锁异常：{}", e.getMessage());
+            return ResponseEntity.status(500).body("获取锁异常".getBytes(StandardCharsets.UTF_8));
+        } finally {
+            if(b && lock.isHeldByCurrentThread()) {
+                lock.unlock();
+            }
+        }
+
+    }
+
+    private Result tryDownload(Integer id) {
+        Url byId = urlMapper.getById(id);
+        if(byId == null) {
+            log.warn("url不存在：{}", id);
+            return Result.error("url不存在");
+        }
+
+        String url = byId.getUrl();
+        String fileName = url.substring(url.lastIndexOf("/") + 1);
+        byte[] bytes = ossUtils.download(fileName);
+        if(bytes.length == 0) {
+            return Result.error("下载失败");
+        }
+
+        return Result.success(bytes);
+    }
 
 }

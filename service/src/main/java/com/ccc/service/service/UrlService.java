@@ -3,6 +3,7 @@ package com.ccc.service.service;
 import com.example.pojo.dto.UrlPageDTO;
 import com.example.pojo.dto.UrlUpdateDTO;
 import com.example.pojo.result.Result;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface UrlService {
@@ -15,4 +16,6 @@ public interface UrlService {
     Result delete(Integer id);
 
     Result pageSelect(UrlPageDTO urlPageDTO);
+
+    ResponseEntity<byte[]> download(Integer id);
 }

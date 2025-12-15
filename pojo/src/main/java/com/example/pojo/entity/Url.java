@@ -27,4 +27,5 @@ public class Url {
     private Integer version;
 
     private int likeCount;
+
 }

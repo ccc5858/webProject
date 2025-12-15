@@ -19,4 +19,5 @@ public class LockConstant {
     public static final String COMMENT_LOCK_GET = "comment_lock_get";
     public static final String COMMENT_LOCK_LIKE = "comment:lock:like:";
     public static final String COMMENT_LOCK_DELETE = "comment:lock:delete:";
+    public static final String URL_LOCK_DOWNLOAD = "url:lock:download:";
 }
