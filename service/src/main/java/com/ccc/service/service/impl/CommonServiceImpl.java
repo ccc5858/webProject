@@ -13,6 +13,7 @@ import com.example.pojo.result.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.integration.IntegrationGraphEndpoint;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -56,10 +57,11 @@ public class CommonServiceImpl implements CommonService {
                 return Result.error("请勿重复点赞");
             }
 
+            CommonService commonService = (CommonService) AopContext.currentProxy();
             if (members == null || !members.contains(String.valueOf(userId))) {
-                return tryLike(urlId, userId);
+                return commonService.tryLike(urlId, userId);
             } else {
-                return tryUnlike(urlId, userId);
+                return commonService.tryUnlike(urlId, userId);
             }
         } catch (InterruptedException e) {
             log.warn("获取锁异常：{}", e.getMessage());
@@ -71,6 +73,7 @@ public class CommonServiceImpl implements CommonService {
         return Result.error("点赞失败");
     }
 
+    @Transactional(rollbackFor = RuntimeException.class)
     public Result tryUnlike(Integer urlId, Integer userId) {
         log.info("取消点赞：{}", urlId);
         Url byId = urlMapper.getById(urlId);
@@ -113,7 +116,7 @@ public class CommonServiceImpl implements CommonService {
     @Override
     public Result subscribe(Integer userId) {
         Integer currentUser = BaseConstant.getCurrentUser();
-        if(currentUser == userId) {
+        if(currentUser.equals(userId)) {
             return Result.error("不能关注自己");
         }
         Set<String> members = stringRedisTemplate.opsForSet().members(RedisConstant.COMMON_SUBSCRIBE + userId);
@@ -127,10 +130,12 @@ public class CommonServiceImpl implements CommonService {
             if(!b) {
                 return Result.error("请勿重复关注");
             }
+
+            CommonService commonService = (CommonService) AopContext.currentProxy();
             if (members == null || !members.contains(String.valueOf(currentUser))) {
-                return trySubscribe(userId, currentUser);
+                return commonService.trySubscribe(userId, currentUser);
             } else {
-                return tryUnsubscribe(userId, currentUser);
+                return commonService.tryUnsubscribe(userId, currentUser);
             }
         } catch (InterruptedException e) {
             log.warn("获取锁异常：{}", e.getMessage());

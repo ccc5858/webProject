@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.*;
@@ -78,7 +79,9 @@ public class UrlServiceImpl implements UrlService {
             if(!b) {
                 return Result.error("获取锁失败");
             }
-            return tryUpload(file, introduce, name);
+
+            UrlServiceImpl urlService = (UrlServiceImpl) AopContext.currentProxy();
+            return urlService.tryUpload(file, introduce, name);
         } catch (Exception e) {
             log.error("上传文件异常：{}", e.getMessage());
             return Result.error("上传文件异常");
@@ -205,7 +208,8 @@ public class UrlServiceImpl implements UrlService {
                 return Result.error("获取锁失败");
             }
 
-            return tryUpdate(urlUpdateDTO);
+            UrlServiceImpl urlService = (UrlServiceImpl) AopContext.currentProxy();
+            return urlService.tryUpdate(urlUpdateDTO);
         } catch (Exception e) {
             log.error("获取锁异常：{}", e.getMessage());
             return Result.error("获取锁异常");
@@ -271,7 +275,8 @@ public class UrlServiceImpl implements UrlService {
                 return Result.error("获取锁失败");
             }
 
-            return tryDelete(id);
+            UrlServiceImpl urlService = (UrlServiceImpl) AopContext.currentProxy();
+            return urlService.tryDelete(id);
         } catch (Exception e) {
             log.error("获取锁异常：{}", e.getMessage());
             return Result.error("获取锁异常");

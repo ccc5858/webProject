@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -219,7 +220,8 @@ public class UserServiceImpl implements UserService {
                 return Result.error("获取锁失败");
             }
 
-            return tryRegister(userRegisterDTO, username);
+            UserService userService = (UserService) AopContext.currentProxy();
+            return userService.tryRegister(userRegisterDTO, username);
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -263,7 +265,8 @@ public class UserServiceImpl implements UserService {
                 return Result.error("获取锁失败");
             }
 
-            return tryGetUser(userPageDTO, result);
+            UserService userService = (UserService) AopContext.currentProxy();
+            return userService.tryGetUser(userPageDTO, result);
         } catch (Exception e) {
             log.error("分页查询用户异常：{}", e.getMessage());
         } finally {
@@ -332,7 +335,8 @@ public class UserServiceImpl implements UserService {
                 return Result.error("获取锁失败");
             }
 
-            return tryUpdate(userDto, user);
+            UserService userService = (UserService) AopContext.currentProxy();
+            return userService.tryUpdate(userDto, user);
         } catch (Exception e) {
             log.error("更新用户异常：{}", e.getMessage());
             return Result.error("更新用户异常");
@@ -420,7 +424,8 @@ public class UserServiceImpl implements UserService {
                 return Result.error("获取锁失败");
             }
 
-            return tryUpdateImg(file);
+            UserService userService = (UserService) AopContext.currentProxy();
+            return userService.tryUpdateImg(file);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         } finally {

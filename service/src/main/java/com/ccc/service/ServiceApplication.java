@@ -7,6 +7,7 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @SpringBootApplication
 @ComponentScan(basePackages = {"com.ccc.common", "com.ccc.service"})
+@EnableAspectJAutoProxy(proxyTargetClass = true)
 public class ServiceApplication {
 
     public static void main(String[] args) {

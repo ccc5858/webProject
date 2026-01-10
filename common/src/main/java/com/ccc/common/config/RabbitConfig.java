@@ -1,6 +1,11 @@
 package com.ccc.common.config;
 
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.retry.MessageRecoverer;
+import org.springframework.amqp.rabbit.retry.RepublishMessageRecoverer;
 import org.springframework.amqp.support.converter.SimpleMessageConverter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,6 +14,9 @@ import java.util.List;
 
 @Configuration
 public class RabbitConfig {
+
+    private static final String ERROR_EXCHANGE = "error.exchange";
+    private static final String defaultErrorRoutingKey = "error";
 
     @Bean
     public SimpleMessageConverter messageConverter() {
@@ -23,5 +31,13 @@ public class RabbitConfig {
         );
         converter.setAllowedListPatterns(allowedPatterns);
         return converter;
+    }
+
+    @Bean
+    @ConditionalOnClass(MessageRecoverer.class)
+    @ConditionalOnMissingBean
+    public MessageRecoverer republishMessageRecoverer(RabbitTemplate rabbitTemplate){
+        return new RepublishMessageRecoverer(
+                rabbitTemplate, ERROR_EXCHANGE, defaultErrorRoutingKey);
     }
 }

@@ -5,6 +5,7 @@ import com.ccc.common.constant.RedisConstant;
 import com.ccc.common.threadLocal.BaseConstant;
 import com.ccc.service.mapper.CommentMapper;
 import com.ccc.service.service.CommentService;
+import com.ccc.service.service.CommonService;
 import com.example.pojo.dto.CommentAddDTO;
 import com.example.pojo.dto.CommentPageDTO;
 import com.example.pojo.entity.Comment;
@@ -14,6 +15,7 @@ import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -53,7 +55,8 @@ public class CommentServiceImpl implements CommentService {
                 return Result.error("请勿频繁操作");
             }
 
-            return tryAdd(commentAddDTO, id);
+            CommentService commentService = (CommentService) AopContext.currentProxy();
+            return commentService.tryAdd(commentAddDTO, id);
         } catch (Exception e) {
             log.error("获取锁异常：{}", e.getMessage());
         } finally {
@@ -146,10 +149,11 @@ public class CommentServiceImpl implements CommentService {
                 return Result.error("请勿频繁操作");
             }
 
+            CommentService commentService = (CommentService) AopContext.currentProxy();
             if(members != null && members.contains(userId.toString())) {
-                return tryUnLike(id, userId, key, byId);
+                return commentService.tryUnLike(id, userId, key, byId);
             } else {
-                return tryLike(id, userId, key, byId);
+                return commentService.tryLike(id, userId, key, byId);
             }
 
 
@@ -164,6 +168,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Result tryLike(Integer id, Integer userId, String key, Comment byId) {
         byId.setLikeCount(byId.getLikeCount() + 1);
@@ -183,6 +188,7 @@ public class CommentServiceImpl implements CommentService {
         return Result.success();
     }
 
+    @Override
     @Transactional(rollbackFor = Exception.class)
     public Result tryUnLike(Integer id, Integer userId, String key, Comment byId) {
         byId.setLikeCount(byId.getLikeCount() - 1);
